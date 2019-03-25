@@ -1,0 +1,13 @@
+[Unit]
+Description=Web Server service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/home/raulaq/Escritorio/Tarea/Program/WebServerDir/WebServer
+
+[Install]
+WantedBy=multi-user.target
