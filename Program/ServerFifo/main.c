@@ -30,6 +30,8 @@ char port[6];
 char root [PATH_MAX + 1] = ""; //File system root
 bool isDefaultLog = true;
 char date[64];
+fd_set set;
+struct timeval timeout;
 
 /*****************************************************************************************
  * General methods : read config file, write logs.
@@ -167,57 +169,59 @@ void startServer(char *port)
 void SendResponse(int request)
 {
     memset( (void*)mesg, (int)'\0', 99999 );
-    rcvd=recv(request, mesg, 99999, 0);
+    //Set timeout
+    FD_ZERO(&set);
+    FD_SET(listenfd, &set);
+    timeout.tv_sec = 2;
+    timeout.tv_usec = 0;
+    int rv = select(request + 1, &set, NULL, NULL, &timeout);//Revie timeout
+    if (rv >0 )
+    {
+        rcvd = recv(request, mesg, 99999, 0);
+        //Receive error
+        if (rcvd < 0) {
+            writeFile("Error in recv method \n", _logPath);
+        }
+            //Message received
+        else if (rcvd != 0) {
+            writeFile(mesg, _logPath);//Write message
+            reqline[0] = strtok(mesg, " \t\n");
+            if (strncmp(reqline[0], "GET\0", 4) == 0) {
+                reqline[1] = strtok(NULL, " \t");
+                reqline[2] = strtok(NULL, " \t\n");
+                if (strncmp(reqline[2], "HTTP/1.0", 8) != 0 && strncmp(reqline[2], "HTTP/1.1", 8) != 0) {
+                    write(request, "HTTP/1.0 400 Bad Request\n", 25);
+                } else {
+                    //if no file, open index
+                    if (strncmp(reqline[1], "/\0", 2) == 0) {
+                        reqline[1] = "/index.html";
+                    }
 
-    //Receive error
-    if (rcvd<0){
-        writeFile("Error in recv method \n",_logPath);
-    }
-        //Message received
-    else if (rcvd!=0) {
-        writeFile(mesg, _logPath);//Write message
-        reqline[0] = strtok (mesg, " \t\n");
-        if ( strncmp(reqline[0], "GET\0", 4)==0 )
-        {
-            reqline[1] = strtok (NULL, " \t");
-            reqline[2] = strtok (NULL, " \t\n");
-            if ( strncmp( reqline[2], "HTTP/1.0", 8)!=0 && strncmp( reqline[2], "HTTP/1.1", 8)!=0 )
-            {
-                write(request, "HTTP/1.0 400 Bad Request\n", 25);
-            }
-            else
-            {
-                //if no file, open index
-                if ( strncmp(reqline[1], "/\0", 2)==0 ){
-                    reqline[1] = "/index.html";
-                }
+                    strcpy(path, root);
+                    strcpy(&path[strlen(root)], reqline[1]);
 
-                strcpy(path, root);
-                strcpy(&path[strlen(root)], reqline[1]);
+                    //Write message
+                    char message[300] = "";
+                    strcat(message, "File loaded: ");
+                    strcat(message, path);
+                    strcat(message, "\n");
+                    writeFile(message, _logPath);
 
-                //Write message
-                char message[300] = "";
-                strcat(message, "File loaded: ");
-                strcat(message, path);
-                strcat(message, "\n");
-                writeFile(message,_logPath);
+                    //File found
+                    if ((fd = open(path, O_RDONLY)) != -1) {
+                        send(request, "HTTP/1.0 200 OK\n\n", 17, 0);
+                        while ((bytes_read = read(fd, data_to_send, BYTES)) > 0)
+                            write(request, data_to_send, bytes_read);
+                    }
 
-                //File found
-                if ( (fd=open(path, O_RDONLY))!=-1 )
-                {
-                    send(request, "HTTP/1.0 200 OK\n\n", 17, 0);
-                    while ( (bytes_read=read(fd, data_to_send, BYTES))>0 )
-                        write (request, data_to_send, bytes_read);
-                }
-
-                    //File not found
-                else{
-                    write(request, "HTTP/1.0 404 Not Found\n", 23);
+                        //File not found
+                    else {
+                        write(request, "HTTP/1.0 404 Not Found\n", 23);
+                    }
                 }
             }
         }
     }
-
     //Close socket
     shutdown (request, SHUT_RDWR);
     close(request);
@@ -247,6 +251,7 @@ int main() {
 
     lenPreRoot = strlen(preRoot);
     strncpy( root, &preRoot[0], lenPreRoot-lenServerName);//Remove server name from path
+
     //Start server
     struct sockaddr_in clientaddr;
     socklen_t addrlen;
@@ -264,11 +269,10 @@ int main() {
     //Wait for connections
     while (1)
     {
-        printf("Waiting....\n");
         addrlen = sizeof(clientaddr);
         int value = accept (listenfd, (struct sockaddr *) &clientaddr, &addrlen);
-        if (value<0)
-            writeFile("Error on accept method",_logPath);
+        if (value<0){
+            writeFile("Error on accept method",_logPath);}
         else
             SendResponse(value);
     }
