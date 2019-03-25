@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart=/home/raulaq/Escritorio/Tarea/Program/WebServerDir/WebServer
+ExecStart=path/WebServerDir/WebServer
 
 [Install]
 WantedBy=multi-user.target
