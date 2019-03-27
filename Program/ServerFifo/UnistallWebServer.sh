@@ -1,10 +1,10 @@
-#########################################################
-# Instituto Tecnologico de Costa Rica                   #
-# Proyecto Sistemas operativos                          #
-# Profesor: Diego Vargas                                #
-# Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  #
-# Unistall web server fifo script                       #
-#########################################################
+############################################################
+# Technological Institute of Costa Rica                    #
+# Project Operating Systems                                #
+# Teacher: Diego Vargas                                    #
+# Students: Raul Arias, Bryan Abarca, Rony Paniagua        #
+# Remove fifo web server                                   #
+############################################################
 
 #Stop web server and remove it
 update-rc.d -f WebServerFifo remove

@@ -1,10 +1,10 @@
-#########################################################
-# Instituto Tecnologico de Costa Rica                   #
-# Proyecto Sistemas operativos                          #
-# Profesor: Diego Vargas                                #
-# Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  #
-# Makefile web server fifo                              #
-#########################################################
+############################################################
+# Technological Institute of Costa Rica                    #
+# Project Operating Systems                                #
+# Teacher: Diego Vargas                                    #
+# Students: Raul Arias, Bryan Abarca, Rony Paniagua        #
+# Makefile of the fifo web server                          #
+############################################################
 
 #Variables
 DIR = /etc/init.d

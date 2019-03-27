@@ -1,10 +1,10 @@
-#########################################################
-# Instituto Tecnologico de Costa Rica                   #
-# Proyecto Sistemas operativos                          #
-# Profesor: Diego Vargas                                #
-# Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  #
-# Docker file web server fifo                           #
-#########################################################
+############################################################
+# Technological Institute of Costa Rica                    #
+# Project Operating Systems                                #
+# Teacher: Diego Vargas                                    #
+# Students: Raul Arias, Bryan Abarca, Rony Paniagua        #
+# Docker file fifo web server                              #
+############################################################
 
 # Setting docker base
 FROM gcc:4.9

@@ -1,10 +1,10 @@
-#########################################################
-# Instituto Tecnologico de Costa Rica                   #
-# Proyecto Sistemas operativos                          #
-# Profesor: Diego Vargas                                #
-# Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  #
-# Remove docker web server fifo script                  #
-#########################################################
+############################################################
+# Technological Institute of Costa Rica                    #
+# Project Operating Systems                                #
+# Teacher: Diego Vargas                                    #
+# Students: Raul Arias, Bryan Abarca, Rony Paniagua        #
+# Remove script of the fifo web server                     #
+############################################################
 
 #Stop container
 sudo docker stop $(sudo docker ps -q --filter ancestor=web_server_fifo )

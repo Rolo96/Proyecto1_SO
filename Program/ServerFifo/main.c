@@ -172,7 +172,7 @@ void SendResponse(int request)
     memset( (void*)mesg, (int)'\0', 99999 );
     FD_ZERO(&set);
     FD_SET(listenfd, &set);
-    timeout.tv_sec = 2;
+    timeout.tv_sec = 6;
     timeout.tv_usec = 0;
     int rv = select(request + 1, &set, NULL, NULL, &timeout);
     if (rv >0 )
