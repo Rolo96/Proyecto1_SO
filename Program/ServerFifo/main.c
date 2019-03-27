@@ -1,3 +1,12 @@
+/********************************************************
+* Instituto Tecnologico de Costa Rica                   *
+* Proyecto Sistemas operativos                          *
+* Profesor: Diego Vargas                                *
+* Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  *
+* Web server fifo                                       *
+********************************************************/
+
+
 #include <stdio.h>
 #include<string.h>
 #include<stdlib.h>
@@ -17,7 +26,7 @@
 
 //Constants
 #define BYTES 1024
-#define CONFPATH "/etc/webserver/config.conf"
+#define CONFPATH "/etc/WebServerFifo/config.conf"
 #define DEFAULT_LOG "/var/log/syslog"
 
 //Variables
@@ -96,20 +105,12 @@ void writeFile(char* message, char * file){
     struct tm *tm = localtime(&t);
     strftime(date, sizeof(date), "%c", tm);
 
-    if(!isDefaultLog){//Not system log
-        int fd = open(file, O_WRONLY | O_APPEND | O_CREAT, 0775);
-        if (fd >= 0) {
-            write(fd, date, strlen(date));
-            write(fd, message, strlen(message));
+    int fd = open(file, O_WRONLY | O_APPEND | O_CREAT, 0775);
+    if (fd >= 0) {
+        write(fd, date, strlen(date));
+        write(fd, message, strlen(message));
 
-            close(fd);
-        }
-    }
-
-    else{//System log
-        openlog("Server Fifo", LOG_PID|LOG_CONS, LOG_USER);
-        syslog(LOG_INFO, "%s", message);
-        closelog();
+        close(fd);
     }
 }
 
@@ -169,12 +170,11 @@ void startServer(char *port)
 void SendResponse(int request)
 {
     memset( (void*)mesg, (int)'\0', 99999 );
-    //Set timeout
     FD_ZERO(&set);
     FD_SET(listenfd, &set);
     timeout.tv_sec = 2;
     timeout.tv_usec = 0;
-    int rv = select(request + 1, &set, NULL, NULL, &timeout);//Revie timeout
+    int rv = select(request + 1, &set, NULL, NULL, &timeout);
     if (rv >0 )
     {
         rcvd = recv(request, mesg, 99999, 0);
@@ -239,7 +239,7 @@ int main() {
 
     char preRoot [PATH_MAX + 1] = "";//Stores root with server name
     int lenPreRoot = 0;//Stores full path length
-    int lenServerName = 9;//Stores server name length
+    int lenServerName = 13;//Stores server name length
 
     //Load variables
     _port = getPort();
@@ -269,6 +269,7 @@ int main() {
     //Wait for connections
     while (1)
     {
+        printf("Waiting....\n");
         addrlen = sizeof(clientaddr);
         int value = accept (listenfd, (struct sockaddr *) &clientaddr, &addrlen);
         if (value<0){

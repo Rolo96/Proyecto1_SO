@@ -1,23 +1,31 @@
-DIR = /etc/systemd/system
-DIR_CONF = /etc/webserver
-DIR_SERVER = ./WebServerDir/
-SERVICE = WebServer.service
+#########################################################
+# Instituto Tecnologico de Costa Rica                   #
+# Proyecto Sistemas operativos                          #
+# Profesor: Diego Vargas                                #
+# Estudiantes: Raul Arias, Bryan Abarca, Rony Paniagua  #
+# Makefile web server fifo                              #
+#########################################################
+
+#Variables
+DIR = /etc/init.d
+DIR_CONF = /etc/WebServerFifo
+DIR_SERVER = ./WebServerFifoDir/
+SERVICE = WebServerFifo
 CONF_FILE = config.conf
-SERVER = WebServer
+SERVER = WebServerFifo
 SRC = main.c
 BIN = main
-TOPDIR=$(shell pwd)
 
+#Copy config file and script daemon, run and install daemon
 all: $(BIN)	
-		sed -i 's:path:'$(TOPDIR)':' WebServer.service
-		sudo  mkdir -p $(DIR_CONF)
-		sudo cp $(CONF_FILE) $(DIR_CONF)
-		sudo cp $(SERVICE) $(DIR)
-		sudo systemctl daemon-reload
-		sudo systemctl enable $(SERVER)
-		sudo systemctl start $(SERVER)
-		sudo chmod -R -f 775 /var/log
+		mkdir -p $(DIR_CONF)
+		cp $(CONF_FILE) $(DIR_CONF)
+		cp $(SERVICE) $(DIR)
+		update-rc.d WebServerFifo defaults
+		/etc/init.d/WebServerFifo start
+
+#Compile C web server
 $(BIN): 
-		gcc $(SRC) -o $(DIR_SERVER)WebServer
+		gcc $(SRC) -o $(DIR_SERVER)WebServerFifo
 
 
