@@ -12,7 +12,7 @@ COPY . /usr/src/WebServerFifo
 WORKDIR /usr/src/WebServerFifo
 
 #Initial port expose
-EXPOSE 8080
+EXPOSE 8081
 
 #Install dependencies (nano, curl) 
 RUN apt-get update; exit 0

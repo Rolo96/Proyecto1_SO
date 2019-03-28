@@ -47,11 +47,11 @@ struct timeval timeout;
 
 /*
  * Method for: Get port from config file
- * Return: If doesnt find the port set is 8080
+ * Return: If doesnt find the port set is 8081
  */
 int getPort(){
 
-    static int port = 8080;//Static for just one value
+    static int port = 8081;//Static for just one value
     FILE *file = fopen (CONFPATH, "r");//Read file
 
     if (file != NULL)

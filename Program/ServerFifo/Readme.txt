@@ -16,13 +16,13 @@ Creation and execution of the docker:
 
 Docker execution test:
 
-	-When executing the previous command, the docker remains running, by default it is ready to run on port 8080, so to do tests it would only be necessary to go to a browser and make requests, 		currently there are several test files in the directory of the web server (/usr/src/WebServerFifo/WebServerFifoDir), so the possible requests would be:
+	-When executing the previous command, the docker remains running, by default it is ready to run on port 8081, so to do tests it would only be necessary to go to a browser and make requests, 		currently there are several test files in the directory of the web server (/usr/src/WebServerFifo/WebServerFifoDir), so the possible requests would be:
 
-		--http://server:8080/test.png
-		--http://server:8080/test.pdf
-		--http://server:8080/test.html
-		--http://server:8080/test.bin
-		--http://server:8080/test.mp4
+		--http://server:8081/test.png
+		--http://server:8081/test.pdf
+		--http://server:8081/test.html
+		--http://server:8081/test.bin
+		--http://server:8081/test.mp4
 
 Modify web server config and operations with the daemon:
 

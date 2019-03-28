@@ -16,4 +16,4 @@ sudo apt install -y docker-ce
 
 #Build and run docker
 sudo docker build -t web_server_fifo .
-sudo docker run -p 8080:8080 -it --rm --name running_web_server_fifo web_server_fifo
+sudo docker run -p 8081:8081 -it --rm --name running_web_server_fifo web_server_fifo
