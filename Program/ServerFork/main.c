@@ -32,14 +32,8 @@
 int listenfd;
 int _port; //Port loaded from file
 char* _logPath;//Log path loaded from file
-char mesg[99999], *reqline[3], data_to_send[BYTES], path[99999];
-int rcvd, fd, bytes_read;
 char port[6];
 char *root;
-bool isDefaultLog = true;
-char date[64];
-fd_set set;
-struct timeval timeout;
 
 /*****************************************************************************************
  * General methods : read config file, write logs.
@@ -85,10 +79,6 @@ char* getLogPath(){
         }
     }
 
-    if (path != DEFAULT_LOG ){
-        isDefaultLog = false;
-    }
-
     return path;
 }
 
@@ -99,6 +89,7 @@ char* getLogPath(){
  */
 void writeFile(char* message, char * file){
 
+    char date[64];
     //Get time
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
@@ -168,55 +159,49 @@ void startServer(char *port)
  */
 void SendResponse(int request)
 {
-    memset( (void*)mesg, (int)'\0', 99999 );
-    FD_ZERO(&set);
-    FD_SET(listenfd, &set);
-    timeout.tv_sec = 6;
-    timeout.tv_usec = 0;
-    int rv = select(request + 1, &set, NULL, NULL, &timeout);
-    if (rv >0 ) {
-        memset((void *) mesg, (int) '\0', 99999);
-        rcvd = recv(request, mesg, 99999, 0);
-        //Receive error
-        if (rcvd < 0) {
-            writeFile("Error in recv method \n", _logPath);
-        }
-            //Message received
-        else if (rcvd != 0) {
-            writeFile(mesg, _logPath);//Write message
-            reqline[0] = strtok(mesg, " \t\n");
-            if (strncmp(reqline[0], "GET\0", 4) == 0) {
-                reqline[1] = strtok(NULL, " \t");
-                reqline[2] = strtok(NULL, " \t\n");
-                if (strncmp(reqline[2], "HTTP/1.0", 8) != 0 && strncmp(reqline[2], "HTTP/1.1", 8) != 0) {
-                    write(request, "HTTP/1.0 400 Bad Request\n", 25);
-                } else {
-                    //if no file, open index
-                    if (strncmp(reqline[1], "/\0", 2) == 0) {
-                        reqline[1] = "/index.html";
-                    }
+    char mesg[BYTES];
+    char *reqline[3], data_to_send[BYTES], path[BYTES];
+    int fd, bytes_read;
 
-                    strcpy(path, root);
-                    strcpy(&path[strlen(root)], reqline[1]);
+    struct timeval tv;
+    tv.tv_sec = 2;
+    tv.tv_usec = 0;
+    setsockopt(request, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    int rcvd = recv(request, mesg, BYTES, 0);
+    if (rcvd > 0) {
+        writeFile(mesg, _logPath);//Write message
+        reqline[0] = strtok(mesg, " \t\n");
+        if (strncmp(reqline[0], "GET\0", 4) == 0) {
+            reqline[1] = strtok(NULL, " \t");
+            reqline[2] = strtok(NULL, " \t\n");
+            if (strncmp(reqline[2], "HTTP/1.0", 8) != 0 && strncmp(reqline[2], "HTTP/1.1", 8) != 0) {
+                write(request, "HTTP/1.0 400 Bad Request\n", 25);
+            } else {
+                //if no file, open index
+                if (strncmp(reqline[1], "/\0", 2) == 0) {
+                    reqline[1] = "/index.html";
+                }
 
-                    //Write message
-                    char message[300] = "";
-                    strcat(message, "File loaded: ");
-                    strcat(message, path);
-                    strcat(message, "\n");
-                    writeFile(message, _logPath);
+                strcpy(path, root);
+                strcpy(&path[strlen(root)], reqline[1]);
 
-                    //File found
-                    if ((fd = open(path, O_RDONLY)) != -1) {
-                        send(request, "HTTP/1.0 200 OK\n\n", 17, 0);
-                        while ((bytes_read = read(fd, data_to_send, BYTES)) > 0)
-                            write(request, data_to_send, bytes_read);
-                    }
+                //Write message
+                char message[300] = "";
+                strcat(message, "File loaded: ");
+                strcat(message, path);
+                strcat(message, "\n");
+                writeFile(message, _logPath);
 
-                        //File not found
-                    else {
-                        write(request, "HTTP/1.0 404 Not Found\n", 23);
-                    }
+                //File found
+                if ((fd = open(path, O_RDONLY)) != -1) {
+                    send(request, "HTTP/1.0 200 OK\n\n", 17, 0);
+                    while ((bytes_read = read(fd, data_to_send, BYTES)) > 0)
+                        write(request, data_to_send, bytes_read);
+                }
+
+                    //File not found
+                else {
+                    write(request, "HTTP/1.0 404 Not Found\n", 23);
                 }
             }
         }
@@ -268,14 +253,14 @@ int main() {
             writeFile("Error on accept method",_logPath);}
         else
         {
-	    int pid = fork(); 
+            int pid = fork();
             if ( pid==0 )
             {
                 SendResponse(value);
                 exit(0);
             }
         }
-	signal(SIGCHLD,SIG_IGN);
+        signal(SIGCHLD,SIG_IGN);
     }
     return 0;
 }

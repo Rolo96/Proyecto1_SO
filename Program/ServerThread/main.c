@@ -23,24 +23,21 @@
 #include <stdbool.h>
 #include <syslog.h>
 #include <pthread.h>
+#include <poll.h>
+
+
 
 //Constants
 #define BYTES 1024
 #define CONFPATH "/etc/WebServerThread/config.conf"
 #define DEFAULT_LOG "/var/log/syslog"
-#define MAX_CLIENTS 1000
 
 //Variables
 int listenfd;
-int clients[MAX_CLIENTS];
 int _port; //Port loaded from file
 char* _logPath;//Log path loaded from file
-char mesg[99999], *reqline[3], data_to_send[BYTES], path[99999];
-int rcvd, fd, bytes_read;
 char port[6];
 char root [PATH_MAX + 1] = ""; //File system root
-bool isDefaultLog = true;
-char date[64];
 
 /*****************************************************************************************
  * General methods : read config file, write logs.
@@ -48,11 +45,11 @@ char date[64];
 
 /*
  * Method for: Get port from config file
- * Return: If doesnt find the port set is 8081
+ * Return: If doesnt find the port set is 8085
  */
 int getPort(){
 
-    static int port = 8081;//Static for just one value
+    static int port = 8085;//Static for just one value
     FILE *file = fopen (CONFPATH, "r");//Read file
 
     if (file != NULL)
@@ -86,10 +83,6 @@ char* getLogPath(){
         }
     }
 
-    if (path != DEFAULT_LOG ){
-        isDefaultLog = false;
-    }
-
     return path;
 }
 
@@ -100,6 +93,7 @@ char* getLogPath(){
  */
 void writeFile(char* message, char * file){
 
+    char date[64];
     //Get time
     time_t t = time(NULL);
     struct tm *tm = localtime(&t);
@@ -170,21 +164,24 @@ void startServer(char *port)
 void* SendResponse(void* socket_desc)
 {
     int request = *(int*)socket_desc;
-    memset( (void*)mesg, (int)'\0', 99999 );
-    rcvd = recv(clients[request], mesg, 99999, 0);
-    //Receive error
-    if (rcvd < 0) {
-        writeFile("Error in recv method \n", _logPath);
-    }
-        //Message received
-    else if (rcvd != 0) {
+    char *reqline[3], data_to_send[BYTES], path[BYTES];
+    int fd, bytes_read;
+    char mesg[BYTES];
+
+    struct timeval tv;
+    tv.tv_sec = 2;
+    tv.tv_usec = 0;
+    setsockopt(request, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    int rcvd = recv(request, mesg, BYTES, 0);
+
+    if (rcvd > 0) {
         writeFile(mesg, _logPath);//Write message
         reqline[0] = strtok(mesg, " \t\n");
         if (strncmp(reqline[0], "GET\0", 4) == 0) {
             reqline[1] = strtok(NULL, " \t");
             reqline[2] = strtok(NULL, " \t\n");
             if (strncmp(reqline[2], "HTTP/1.0", 8) != 0 && strncmp(reqline[2], "HTTP/1.1", 8) != 0) {
-                write(clients[request], "HTTP/1.0 400 Bad Request\n", 25);
+                write(request, "HTTP/1.0 400 Bad Request\n", 25);
             } else {
                 //if no file, open index
                 if (strncmp(reqline[1], "/\0", 2) == 0) {
@@ -203,24 +200,22 @@ void* SendResponse(void* socket_desc)
 
                 //File found
                 if ((fd = open(path, O_RDONLY)) != -1) {
-                    send(clients[request], "HTTP/1.0 200 OK\n\n", 17, 0);
+                    send(request, "HTTP/1.0 200 OK\n\n", 17, 0);
                     while ((bytes_read = read(fd, data_to_send, BYTES)) > 0)
-                        write(clients[request], data_to_send, bytes_read);
+                        write(request, data_to_send, bytes_read);
                 }
 
                     //File not found
                 else {
-                    write(clients[request], "HTTP/1.0 404 Not Found\n", 23);
+                    write(request, "HTTP/1.0 404 Not Found\n", 23);
                 }
             }
         }
     }
     //Close socket
-    shutdown (clients[request], SHUT_RDWR);
-    close(clients[request]);
-    clients[request]=-1;
+    shutdown (request, SHUT_RDWR);
+    close(request);
 }
-
 
 /*****************************************************************************************
  * Main method : start and manage server
@@ -230,11 +225,6 @@ void* SendResponse(void* socket_desc)
  * Main method, start server, accept conections and respond
  */
 int main() {
-
-    int slot=0;
-    int i;
-    for (i=0; i<MAX_CLIENTS; i++)
-        clients[i]=-1;
 
     char preRoot [PATH_MAX + 1] = "";//Stores root with server name
     int lenPreRoot = 0;//Stores full path length
@@ -271,17 +261,16 @@ int main() {
     {
         printf("Waiting....\n");
         addrlen = sizeof(clientaddr);
-        clients[slot] = accept (listenfd, (struct sockaddr *) &clientaddr, &addrlen);
-        if (clients[slot]<0){
+        int value = accept (listenfd, (struct sockaddr *) &clientaddr, &addrlen);
+        if (value<0){
             writeFile("Error on accept method",_logPath);}
         else{
-            if( pthread_create( &thread_id , NULL ,  SendResponse , (void*) &slot) < 0)
+            if( pthread_create( &thread_id , NULL ,  SendResponse , (void*) &value) < 0)
             {
                 perror("could not create thread");
                 return 1;
             }
         }
-        while (clients[slot]!=-1) slot = (slot+1)%MAX_CLIENTS;
     }
     return 0;
 }
