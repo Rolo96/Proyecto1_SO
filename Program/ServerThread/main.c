@@ -163,7 +163,7 @@ void startServer(char *port)
  */
 void* SendResponse(void* socket_desc)
 {
-    int request = *(int*)socket_desc;
+    int request = (intptr_t)socket_desc;
     char *reqline[3], data_to_send[BYTES], path[BYTES];
     int fd, bytes_read;
     char mesg[BYTES];
@@ -265,7 +265,7 @@ int main() {
         if (value<0){
             writeFile("Error on accept method",_logPath);}
         else{
-            if( pthread_create( &thread_id , NULL ,  SendResponse , (void*) &value) < 0)
+            if( pthread_create( &thread_id , NULL ,  SendResponse , (void*)(intptr_t) value) < 0)
             {
                 perror("could not create thread");
                 return 1;
