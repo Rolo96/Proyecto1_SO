@@ -3,29 +3,8 @@
 # Project Operating Systems                                #
 # Teacher: Diego Vargas                                    #
 # Students: Raul Arias, Bryan Abarca, Rony Paniagua        #
-# Config file Thread web server                            #
+# Makefile of the benchmark                                #
 ############################################################
 
-# Begin config flie
-# Track events
-LOGFILE = /var/log/syslog
-
-#Web server port
-PORT = 8085
-
-#Scheduler
-SCHEDULER = SRR
-
-#Server quantum
-QUANTUM = 2 
-
-#Server tick
-TICK = 50
-
-#New queue increase
-a = 2
-
-#Accepted queue increase
-b = 1
-
-# End config file
+all:
+	gcc bclient.c -o bclient -lpthread

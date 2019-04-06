@@ -246,7 +246,6 @@ int main() {
     //Wait for connections
     while (1)
     {
-        printf("Waiting....\n");
         addrlen = sizeof(clientaddr);
         int value = accept (listenfd, (struct sockaddr *) &clientaddr, &addrlen);
         if (value<0){
